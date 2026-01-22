@@ -1,0 +1,136 @@
+# =============================================================================
+# Data Sources Configuration
+# =============================================================================
+# Configure both Git repositories AND web pages for training data collection.
+#
+# For Git repos:  ./scripts/collect_all_data.sh
+# For Web pages:  python run_pipeline.py
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Web Pages (JavaScript-rendered supported via Playwright)
+# -----------------------------------------------------------------------------
+# The web crawler uses Playwright for full JavaScript rendering.
+# Configure start URLs, allowed domains, and crawl depth.
+
+web_sources:
+  - name: hashicorp-terraform
+    start_url: https://developer.hashicorp.com/tutorials/library?product=terraform
+    allowed_domain: developer.hashicorp.com
+    max_depth: 4
+    request_delay: 1.0
+    enabled: true
+    description: "HashiCorp Terraform tutorials and documentation"
+
+  - name: python-docs
+    start_url: https://docs.python.org/3/tutorial/
+    allowed_domain: docs.python.org
+    max_depth: 3
+    request_delay: 0.5
+    enabled: false
+    description: "Official Python documentation tutorials"
+
+  - name: real-python
+    start_url: https://realpython.com/tutorials/python/
+    allowed_domain: realpython.com
+    max_depth: 2
+    request_delay: 1.0
+    enabled: false
+    description: "Real Python tutorials"
+
+# -----------------------------------------------------------------------------
+# Git Repositories
+# -----------------------------------------------------------------------------
+repositories:
+  # Kubernetes Python Client - Official examples
+  - name: k8s-python
+    url: https://github.com/kubernetes-client/python
+    subdirs:
+      - examples
+    type: python
+    description: "Kubernetes Python client official examples"
+
+  # Pytest - Testing framework documentation
+  - name: pytest
+    url: https://github.com/pytest-dev/pytest
+    subdirs:
+      - doc/en
+    type: mixed  # Python + RST documentation
+    description: "Pytest documentation with code examples"
+
+  # Advanced Python by Kristian Rother
+  - name: advanced-python-krother
+    url: https://github.com/krother/advanced_python
+    type: python
+    description: "Advanced Python programming tutorials"
+
+  # Python Mastery by David Beazley
+  - name: python-mastery
+    url: https://github.com/dabeaz-course/python-mastery
+    type: python
+    description: "Python Mastery course materials"
+
+  # Amazing Python Scripts Collection
+  - name: amazing-python
+    url: https://github.com/avinashkranjan/Amazing-Python-Scripts
+    type: python
+    description: "Collection of useful Python scripts"
+
+# -----------------------------------------------------------------------------
+# Additional Sources (commented out - uncomment to include)
+# -----------------------------------------------------------------------------
+# Uncomment and add more repositories as needed:
+
+  - name: fastapi-examples
+    url: https://github.com/tiangolo/fastapi
+    subdirs:
+      - docs_src
+    type: python
+    description: "FastAPI documentation examples"
+
+  - name: django-examples
+    url: https://github.com/django/django
+    subdirs:
+      - tests
+    type: python
+    description: "Django test examples"
+
+  - name: flask-examples
+    url: https://github.com/pallets/flask
+    subdirs:
+      - examples
+    type: python
+    description: "Flask framework examples"
+
+  - name: requests-examples
+    url: https://github.com/psf/requests
+    subdirs:
+      - tests
+    type: python
+    description: "Requests library examples"
+
+# -----------------------------------------------------------------------------
+# Processing Settings
+# -----------------------------------------------------------------------------
+settings:
+  # Minimum output length (characters) to include in training
+  min_output_length: 50
+
+  # Maximum sequence length for training
+  max_sequence_length: 2048
+
+  # Validation set size (fraction)
+  val_set_size: 0.05
+
+  # Output format
+  output_format: alpaca  # Options: alpaca, sharegpt, raw
+
+# -----------------------------------------------------------------------------
+# Output Paths
+# -----------------------------------------------------------------------------
+paths:
+  repos_dir: repos
+  raw_data_dir: data/raw
+  training_data_dir: data/training
+  combined_output: data/training/all_python_combined.json
+  deduped_output: data/training/all_python_deduped.json

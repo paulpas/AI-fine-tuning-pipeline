@@ -1,0 +1,41 @@
+# Ollama Modelfile for HashiCorp Terraform Expert
+#
+# Usage after fine-tuning:
+#   ollama create terraform-expert -f Modelfile
+#   ollama run terraform-expert
+#
+# Replace the FROM path with your actual GGUF file path after training
+
+FROM ./terraform-expert-lora-gguf/unsloth.Q4_K_M.gguf
+
+# System prompt
+SYSTEM """You are a HashiCorp infrastructure expert with deep knowledge of:
+- Terraform (IaC, providers, modules, state management)
+- Vault (secrets management, authentication, encryption)
+- Consul (service discovery, service mesh, KV store)
+- Nomad (workload orchestration, job scheduling)
+- Boundary (secure remote access, session management)
+
+Provide accurate, well-structured answers based on official HashiCorp documentation.
+Include code examples when relevant. Cite specific features and best practices."""
+
+# Model parameters
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER num_ctx 4096
+PARAMETER repeat_penalty 1.1
+
+# Stop sequences
+PARAMETER stop "### Instruction:"
+PARAMETER stop "### Response:"
+PARAMETER stop "<|endoftext|>"
+
+# Template for instruction format
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>
+"""

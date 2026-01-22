@@ -1,0 +1,458 @@
+# =============================================================================
+# Unified Pipeline Configuration
+# =============================================================================
+# Single source of truth for the entire LLM training pipeline.
+# All stages read from this config - no hardcoded values in scripts.
+#
+# Usage:
+#   python -m pipeline.run --config config/pipeline_config.yaml
+#   python -m pipeline.run --config config/pipeline_config.yaml --stage train
+#   python -m pipeline.run --config config/my_custom_config.yaml
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Pipeline Metadata
+# -----------------------------------------------------------------------------
+pipeline:
+  name: python-expert
+  version: v5
+  description: "Python expert model trained on multiple sources"
+
+# -----------------------------------------------------------------------------
+# Paths (relative to project root)
+# -----------------------------------------------------------------------------
+paths:
+  root: "."
+  repos: "repos"
+  data:
+    raw: "data/raw"
+    training: "data/training"
+    combined: "data/training/all_python_combined.json"
+    deduped: "data/training/all_python_deduped.json"
+  output:
+    checkpoints: "finetune/output"
+    merged: "finetune/output/merged"
+    gguf: "finetune/output/gguf"
+  logs: "logs"
+  cache: ".cache"
+
+# -----------------------------------------------------------------------------
+# Data Sources - Git Repositories
+# -----------------------------------------------------------------------------
+git_sources:
+  - name: k8s-python
+    url: https://github.com/kubernetes-client/python
+    subdirs: ["examples"]
+    type: python
+    enabled: true
+    description: "Kubernetes Python client official examples"
+
+  - name: pytest
+    url: https://github.com/pytest-dev/pytest
+    subdirs: ["doc/en"]
+    type: rst  # Uses RST extractor
+    enabled: true
+    description: "Pytest documentation with code examples"
+
+  - name: advanced-python
+    url: https://github.com/krother/advanced_python
+    subdirs: []  # Entire repo
+    type: python
+    enabled: true
+    description: "Advanced Python programming tutorials"
+
+  - name: python-mastery
+    url: https://github.com/dabeaz-course/python-mastery
+    subdirs: []
+    type: python
+    enabled: true
+    description: "Python Mastery course materials"
+
+  - name: amazing-python
+    url: https://github.com/avinashkranjan/Amazing-Python-Scripts
+    subdirs: []
+    type: python
+    enabled: true
+    description: "Collection of useful Python scripts"
+
+  - name: fastapi
+    url: https://github.com/tiangolo/fastapi
+    subdirs: ["docs_src"]
+    type: python
+    enabled: true
+    description: "FastAPI documentation examples"
+
+  - name: django
+    url: https://github.com/django/django
+    subdirs: ["tests"]
+    type: python
+    enabled: true
+    description: "Django test examples"
+
+  - name: flask
+    url: https://github.com/pallets/flask
+    subdirs: ["examples"]
+    type: python
+    enabled: true
+    description: "Flask framework examples"
+
+  - name: requests
+    url: https://github.com/psf/requests
+    subdirs: ["tests"]
+    type: python
+    enabled: true
+    description: "Requests library examples"
+
+# -----------------------------------------------------------------------------
+# Data Sources - Web Crawling
+# -----------------------------------------------------------------------------
+web_sources:
+  - name: hashicorp-terraform
+    start_url: https://developer.hashicorp.com/tutorials/library?product=terraform
+    allowed_domain: developer.hashicorp.com
+    max_depth: 4
+    request_delay: 1.0
+    enabled: false
+    description: "HashiCorp Terraform tutorials and documentation"
+
+  - name: python-docs
+    start_url: https://docs.python.org/3/tutorial/
+    allowed_domain: docs.python.org
+    max_depth: 3
+    request_delay: 0.5
+    enabled: false
+    description: "Official Python documentation tutorials"
+
+# -----------------------------------------------------------------------------
+# Data Sources - Stack Overflow & GitHub (High-Quality Q&A)
+# -----------------------------------------------------------------------------
+external_sources:
+  stackoverflow:
+    enabled: true
+    tags:
+      - python-kubernetes
+      - docker-py
+      - boto3
+      - terraform
+      - ansible
+      - python-asyncio
+      - pytest
+      - fastapi
+      - flask
+      - aws
+      - machine learnnig
+    min_score: 10
+    max_per_tag: 2000
+    # API key in env: STACKOVERFLOW_API_KEY
+
+  github:
+    enabled: true
+    # Static list of repos to always include
+    repos:
+      - kubernetes-client/python
+      - docker/docker-py
+      - hashicorp/terraform
+      - ansible/ansible
+      - pytest-dev/pytest
+      - tiangolo/fastapi
+      - boto/boto3
+      - antonputra/tutorials
+      - hashicorp/terraform-provider-aws
+      - aws/aws-cli
+      - aws-ia/terraform-aws-eks-blueprints
+      - aws-ia/terraform-aws-eks-blueprints-addon
+      - awslabs/crossplane-on-eks
+
+    # Search queries to dynamically find top repos (NEW)
+    # Each query finds up to max_repos_per_search repos with min_stars
+    searches:
+      - "antonbabenko/terraform-skill"
+      - "python devops"
+      - "python kubernetes"
+      - "terraform aws"
+      - "ansible automation"
+      - "python docker"
+      - "fastapi tutorial"
+      - "pytest examples"
+      - "python aws lambda"
+      - "crossplane"
+      - "python training"
+      - "aws landing zone terraform"
+      - "aws control tower account factory"
+      - "aws organizations service control policies"
+      - "iam identity center sso permission sets"
+      - "iam policy least privilege examples"
+      - "aws kms key policy best practices"
+      - "aws cloudtrail org trail setup"
+      - "aws config conformance packs"
+      - "aws security hub custom insights"
+      - "aws guardduty findings automation"
+      - "aws well architected framework examples"
+      - "aws multi account networking transit gateway"
+      - "aws vpc endpoint private link architecture"
+      - "aws route53 private hosted zone cross account"
+      - "aws network firewall terraform module"
+      - "aws waf cloudfront terraform"
+      - "aws ecr replication cross region"
+      - "aws ecs fargate terraform production"
+      - "aws eks blueprints terraform"
+      - "eks cluster autoscaler karpenter"
+      - "karpenter provisioner nodepool examples"
+      - "eks iam roles for service accounts irsa"
+      - "aws load balancer controller helm chart values"
+      - "external dns route53 eks"
+      - "cert manager letsencrypt dns01 route53"
+      - "kubernetes ingress gateway api gateway"
+      - "kubernetes network policy cilium examples"
+      - "cilium hubble observability setup"
+      - "cilium eBPF security policies"
+      - "kubernetes pod security standards baseline restricted"
+      - "opa gatekeeper constraint templates examples"
+      - "kyverno policies best practices"
+      - "kubernetes admission controller webhook examples"
+      - "kubernetes multi tenancy namespace isolation"
+      - "argo cd app of apps pattern"
+      - "argo cd application set generator git"
+      - "fluxcd kustomize helm release examples"
+      - "gitops monorepo vs polyrepo kubernetes"
+      - "crossplane aws provider configuration examples"
+      - "crossplane compositions examples"
+      - "crossplane pipeline mode function examples"
+      - "crossplane composition patches and transforms"
+      - "crossplane xrd xtypes claim examples"
+      - "crossplane managed resources aws rds s3 iam"
+      - "crossplane gitops argo cd integration"
+      - "crossplane external name import existing resources"
+      - "crossplane provider-aws upgrade guide"
+      - "crossplane composition function-go-template examples"
+      - "crossplane function-patch-and-transform examples"
+      - "crossplane environment configs examples"
+      - "platform engineering internal developer platform reference"
+      - "backstage software templates kubernetes"
+      - "backstage aws catalog entities"
+      - "golden path devops platform examples"
+      - "terraform aws modules best practices"
+      - "terraform terragrunt live repo structure"
+      - "terraform remote state s3 dynamodb locking"
+      - "terraform testing with terratest examples"
+      - "terraform tflint ruleset aws"
+      - "terraform checkov policy as code"
+      - "opentofu migration from terraform"
+      - "pulumi aws eks examples"
+      - "cloudformation guard rules examples"
+      - "aws cdk best practices typescript"
+      - "aws cdk pipelines multi account"
+      - "serverless framework aws lambda api gateway"
+      - "lambda power tools python logging tracing metrics"
+      - "eventbridge architecture patterns"
+      - "step functions saga pattern examples"
+      - "sns sqs dlq redrive policy"
+      - "aws dynamodb single table design examples"
+      - "aurora postgres performance tuning"
+      - "aws rds proxy usage"
+      - "aws s3 security bucket policy examples"
+      - "aws s3 access logs cloudtrail data events"
+      - "aws secrets manager rotation lambda"
+      - "aws parameter store vs secrets manager"
+      - "observability opentelemetry collector kubernetes"
+      - "prometheus operator kube prometheus stack"
+      - "grafana dashboards kubernetes node exporter"
+      - "loki promtail kubernetes logging"
+      - "fluent bit eks log routing"
+      - "aws cloudwatch container insights eks"
+      - "datadog eks integration helm chart values"
+      - "sre error budgets slo sli examples"
+      - "chaos engineering litmus chaos kubernetes"
+      - "k6 load testing kubernetes"
+      - "junit pytest integration testing examples"
+      - "contract testing pact examples"
+      - "consumer driven contract testing microservices"
+      - "testcontainers python integration"
+      - "github actions aws oidc assume role"
+      - "github actions reusable workflows terraform"
+      - "gitlab ci aws eks deploy pipeline"
+      - "ci cd security scanning trivy grype"
+      - "sbom generation cyclonedx github actions"
+      - "supply chain security sigstore cosign kubernetes"
+      - "sops age kubernetes secrets gitops"
+      - "vault kubernetes auth method"
+      - "helm chart best practices templates values schema"
+
+    # Search settings
+    max_repos_per_search: 100  # Max repos per search query
+    min_stars: 100             # Minimum stars for searched repos
+
+    # Collection settings
+    max_issues_per_repo: 50
+    collect_discussions: true
+    collect_code: false
+    # Token in env: GITHUB_TOKEN
+
+# -----------------------------------------------------------------------------
+# Data Processing Settings
+# -----------------------------------------------------------------------------
+processing:
+  # Extraction
+  min_code_length: 50
+  max_code_length: 10000
+  include_docstrings: true
+  include_functions: true
+  include_full_files: true
+
+  # Deduplication
+  deduplication:
+    enabled: true
+    min_output_length: 50
+    max_repetition: 3
+    similarity_threshold: 0.85
+
+  # Dataset format
+  output_format: alpaca  # Options: alpaca, sharegpt, raw
+
+  # Validation split
+  val_set_size: 0.05
+
+  # Enhanced data generation (NEW)
+  enhancement:
+    enabled: true
+    multi_style: true  # Generate conversational, tutorial, quick-ref versions
+    styles:
+      - conversational  # Talk like a senior engineer
+      - tutorial        # Step-by-step with explanations
+      - quick_reference # Concise, just the code
+      - debugging       # Error-focused responses
+    add_explanations: true
+    add_best_practices: true
+
+# -----------------------------------------------------------------------------
+# DPO (Preference) Training Settings (NEW)
+# -----------------------------------------------------------------------------
+dpo_training:
+  enabled: true
+  output_file: "data/training/dpo_pairs.json"
+  categories:
+    - exception_handling
+    - resource_management
+    - security
+    - performance
+    - kubernetes_patterns
+    - docker_patterns
+  include_severity:
+    - critical
+    - high
+    - medium
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  # Base model
+  base_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+  model_type: "AutoModelForCausalLM"
+  tokenizer_type: "AutoTokenizer"
+  trust_remote_code: true
+
+  # LoRA configuration
+  lora:
+    enabled: true
+    r: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
+
+  # Training hyperparameters
+  hyperparameters:
+    num_epochs: 3
+    micro_batch_size: 4
+    gradient_accumulation_steps: 2
+    learning_rate: 0.00003
+    lr_scheduler: cosine
+    warmup_ratio: 0.1
+    weight_decay: 0.1
+    max_grad_norm: 0.5
+    optimizer: adamw_torch
+
+  # Sequence settings
+  sequence_len: 2048
+  sample_packing: false
+  pad_to_sequence_len: true
+
+  # Evaluation and checkpointing
+  eval_steps: 100
+  save_steps: 100
+  save_total_limit: 5
+  early_stopping_patience: 10
+
+  # Memory optimizations
+  gradient_checkpointing: true
+  flash_attention: false
+  bf16: auto
+  fp16: false
+
+  # Hardware
+  num_gpus: 4
+
+# -----------------------------------------------------------------------------
+# Model Export Configuration
+# -----------------------------------------------------------------------------
+export:
+  # LoRA merge settings
+  merge:
+    torch_dtype: float16
+    device_map: cpu
+
+  # GGUF conversion
+  gguf:
+    quantization: q4_k_m  # Options: q4_k_m, q5_k_m, q8_0, f16
+    llama_cpp_path: "~/llama.cpp"
+
+  # Ollama settings
+  ollama:
+    model_name: "python-expert"  # Will be suffixed with version
+    temperature: 0.5
+    repeat_penalty: 1.3
+    num_predict: 512
+    system_prompt: |
+      You are a Python expert assistant. You provide accurate, well-documented
+      Python code with clear explanations. You follow best practices and PEP 8
+      style guidelines.
+
+# -----------------------------------------------------------------------------
+# Logging and Monitoring
+# -----------------------------------------------------------------------------
+logging:
+  level: INFO
+  format: "%(asctime)s %(levelname)s %(name)s - %(message)s"
+  file: "pipeline.log"
+  console: true
+
+# -----------------------------------------------------------------------------
+# Profiles (for running multiple configurations)
+# -----------------------------------------------------------------------------
+profiles:
+  # Quick test run
+  test:
+    training:
+      num_epochs: 1
+      eval_steps: 10
+      save_steps: 10
+    git_sources:
+      # Only use first 2 sources for testing
+      - name: k8s-python
+        enabled: true
+      - name: pytest
+        enabled: true
+
+  # Production run with all sources
+  production:
+    training:
+      num_epochs: 3
+      eval_steps: 100
+    # All sources enabled by default

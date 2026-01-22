@@ -1,0 +1,87 @@
+# Axolotl config for Kubernetes Python fine-tuning
+# Optimized for small dataset (103 samples)
+
+base_model: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+load_in_8bit: false
+load_in_4bit: false
+
+# Dataset - K8s Python examples
+datasets:
+  - path: data/training/all_python_deduped.json
+    type: alpaca
+
+dataset_prepared_path: finetune/prepared_all_python
+val_set_size: 0.05
+output_dir: finetune/output/python-expert-v5-deepseek-r1
+
+# LoRA configuration - optimized for quality
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.1
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# Sequence settings
+sequence_len: 2048
+sample_packing: false
+pad_to_sequence_len: true
+
+# Wandb logging (disabled)
+wandb_project:
+wandb_entity:
+wandb_watch:
+wandb_name:
+wandb_log_model:
+
+# Training hyperparameters - optimized for quality
+gradient_accumulation_steps: 2
+micro_batch_size: 4
+num_epochs: 3
+optimizer: adamw_torch
+lr_scheduler: cosine
+learning_rate: 0.00003
+weight_decay: 0.1
+max_grad_norm: 0.5
+warmup_ratio: 0.1
+
+# Evaluation and checkpointing
+eval_steps: 100
+save_steps: 100
+eval_strategy: steps
+save_strategy: steps
+save_total_limit: 5
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
+
+# Early stopping
+early_stopping_patience: 10
+
+# Memory optimizations
+gradient_checkpointing: true
+flash_attention: false
+
+# Logging
+logging_steps: 5
+
+# Other settings
+train_on_inputs: false
+group_by_length: false
+bf16: auto
+fp16: false
+tf32: false
+special_tokens:
+  pad_token: "<pad>"
+
+trust_remote_code: true

@@ -1,0 +1,8 @@
+beautifulsoup4==4.12.3
+requests==2.32.3
+readability-lxml==0.8.1
+markdownify==0.11.6
+tiktoken==0.7.0   # optional – replace token_count with a real tokenizer later
+playwright==1.57.0  # for JavaScript rendering in web scraping
+openai>=1.0.0
+anthropic>=0.18.0

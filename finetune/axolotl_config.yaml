@@ -1,0 +1,76 @@
+# Axolotl config for fine-tuning on HashiCorp Terraform dataset
+# AMD MI50 GPUs with ROCm
+
+base_model: deepseek-ai/deepseek-coder-6.7b-instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+trust_remote_code: true
+
+# With 128GB VRAM (4x MI50), load full precision
+load_in_8bit: false
+load_in_4bit: false
+
+# Dataset
+datasets:
+  - path: /home/paulpas/git/ideas/llm_training_web_data/data/training/alpaca.json
+    type: alpaca
+
+dataset_prepared_path: /home/paulpas/git/ideas/llm_training_web_data/finetune/prepared_data
+val_set_size: 0.05
+output_dir: /home/paulpas/git/ideas/llm_training_web_data/finetune/output/terraform-expert
+
+# LoRA configuration
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_target_linear: true
+
+# Training parameters
+sequence_len: 2048
+sample_packing: true
+pad_to_sequence_len: true
+
+gradient_accumulation_steps: 4
+micro_batch_size: 2
+num_epochs: 2
+learning_rate: 0.0002
+lr_scheduler: cosine
+warmup_ratio: 0.1
+
+optimizer: adamw_torch
+weight_decay: 0.01
+max_grad_norm: 1.0
+
+# Precision
+bf16: auto
+fp16: false
+tf32: false
+
+# Logging
+logging_steps: 10
+save_steps: 100
+eval_steps: 100
+
+# Checkpointing
+save_total_limit: 3
+save_strategy: steps
+
+# Performance
+gradient_checkpointing: true
+flash_attention: false
+
+# Output
+hub_model_id:
+push_to_hub: false
+
+# Seed
+seed: 42

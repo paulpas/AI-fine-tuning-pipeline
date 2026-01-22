@@ -1,0 +1,130 @@
+# =============================================================================
+# LLM Fine-Tuning Pipeline Configuration
+# Sample configuration file - customize for your use case
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Project Settings
+# -----------------------------------------------------------------------------
+project:
+  name: "terraform-expert-v2"
+  output_dir: "finetune/output"
+
+# -----------------------------------------------------------------------------
+# GPU Settings
+# -----------------------------------------------------------------------------
+gpu:
+  platform: "rocm"  # Options: rocm, cuda
+  device_ids: "0,1,2,3"
+  # ROCm-specific settings (only for AMD GPUs)
+  rocm:
+    gfx_version: "9.0.6"  # For MI50. Set to null for modern GPUs (MI100+)
+
+# -----------------------------------------------------------------------------
+# Data Settings
+# -----------------------------------------------------------------------------
+data:
+  # Raw data input (optional - set prepare_data: false if not using)
+  raw_data_path: "data/raw/dataset.json"
+
+  # Processed data paths
+  training_data_path: "data/training/alpaca.json"
+  cleaned_data_path: "data/training/alpaca_deduped.json"
+
+  # Cleaning settings
+  min_output_length: 50
+  max_repetition_count: 3
+
+# -----------------------------------------------------------------------------
+# Base Model
+# -----------------------------------------------------------------------------
+model:
+  name: "deepseek-ai/deepseek-coder-6.7b-instruct"
+  type: "LlamaForCausalLM"
+  trust_remote_code: true
+
+# -----------------------------------------------------------------------------
+# LoRA Configuration
+# -----------------------------------------------------------------------------
+lora:
+  rank: 8           # Lower = more regularization, less capacity
+  alpha: 16         # Usually 2x rank
+  dropout: 0.1      # Higher = more regularization
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+# -----------------------------------------------------------------------------
+# Training Hyperparameters
+# -----------------------------------------------------------------------------
+training:
+  epochs: 4
+  learning_rate: 0.00005      # Lower for stability
+  weight_decay: 0.05          # Higher for regularization
+  max_grad_norm: 0.5          # Gradient clipping
+  warmup_ratio: 0.1
+  lr_scheduler: "cosine"
+
+  # Batch settings (adjust based on GPU memory)
+  micro_batch_size: 2         # Per-GPU batch size
+  gradient_accumulation_steps: 8
+
+  # Sequence settings
+  sequence_length: 2048
+  sample_packing: true
+
+  # Evaluation and saving
+  val_set_size: 0.1
+  eval_steps: 50
+  save_steps: 50
+
+  # Early stopping
+  early_stopping_patience: 3
+
+# -----------------------------------------------------------------------------
+# Model Conversion
+# -----------------------------------------------------------------------------
+conversion:
+  # GGUF quantization type
+  # Options: q4_k_m (smallest), q5_k_m (balanced), q8_0 (quality), f16 (full)
+  quantization: "q4_k_m"
+
+  # Ollama model name
+  ollama_model_name: "terraform-expert-v2"
+
+  # Inference parameters
+  inference:
+    temperature: 0.5
+    repeat_penalty: 1.3
+    num_predict: 512
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+evaluation:
+  # Base model for comparison (must be available in Ollama)
+  base_model_ollama: "deepseek-r1:1.5b"
+
+  # Number of test questions
+  num_tests: 5
+
+  # Timeout per question (seconds)
+  timeout: 60
+
+# -----------------------------------------------------------------------------
+# Pipeline Steps (enable/disable)
+# Set to false to skip a step
+# -----------------------------------------------------------------------------
+steps:
+  prepare_data: false     # Skip if data already in Alpaca format
+  deduplicate: false      # Skip if data already cleaned
+  train: true             # Run training
+  merge_lora: true        # Merge LoRA with base model
+  convert_gguf: true      # Convert to GGUF format
+  import_ollama: true     # Import into Ollama
+  evaluate: true          # Run evaluation
