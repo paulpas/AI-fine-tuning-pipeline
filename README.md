@@ -54,13 +54,20 @@ This project provides a **complete, end-to-end pipeline** for fine-tuning large 
 git clone https://github.com/paulpas/ideas.git
 cd ideas/llm_training_web_data
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Install uv (if not already installed)
+# macOS/Linux:
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
-pip install -r requirements.txt
+# Windows (via PowerShell):
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -r requirements.txt
 ```
+
+> **Why uv?** It's 10-100x faster than pip with better dependency resolution and lock file support.
 
 ### Configuration
 
