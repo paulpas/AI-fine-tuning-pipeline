@@ -1,0 +1,49 @@
+[Unit]
+Description=LLM Training Auto-Recovery Service
+Documentation=file:///home/paulpas/git/ideas/llm_training_web_data/finetune/auto_recover.py
+After=network.target
+Wants=training-recovery-monitor.timer
+
+[Service]
+Type=simple
+User=paulpas
+Group=paulpas
+WorkingDirectory=/home/paulpas/git/ideas/llm_training_web_data
+
+# Environment setup
+Environment="PATH=/home/paulpas/git/ideas/llm_training_web_data/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="HSA_OVERRIDE_GFX_VERSION=9.0.6"
+Environment="ROCR_VISIBLE_DEVICES=0,1,2,3"
+Environment="HIP_VISIBLE_DEVICES=0,1,2,3"
+Environment="GPU_DEVICE_ORDINAL=0,1,2,3"
+
+# Start the auto-recovery script
+ExecStart=/home/paulpas/git/ideas/llm_training_web_data/finetune/start_auto_recovery.sh
+
+# Restart policy - restart on failure with exponential backoff
+Restart=on-failure
+RestartSec=30
+StartLimitInterval=600
+StartLimitBurst=5
+
+# Process management
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=300
+
+# Resource limits (optional - adjust based on your system)
+# CPUQuota=80%
+# MemoryLimit=100G
+
+# Output to journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=training-recovery
+
+# Security (optional)
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=false
+
+[Install]
+WantedBy=multi-user.target

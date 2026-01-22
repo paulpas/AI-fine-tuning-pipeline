@@ -1,0 +1,84 @@
+# Axolotl config for resuming terraform-expert-v2 training
+# Conservative settings to avoid GPU hangs
+# AMD MI50 GPUs with ROCm
+
+base_model: deepseek-ai/deepseek-coder-6.7b-instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+trust_remote_code: true
+
+# With 128GB VRAM (4x MI50), load full precision
+load_in_8bit: false
+load_in_4bit: false
+
+# Dataset
+datasets:
+  - path: /home/paulpas/git/ideas/llm_training_web_data/data/training/alpaca_deduped.json
+    type: alpaca
+
+dataset_prepared_path: /home/paulpas/git/ideas/llm_training_web_data/finetune/prepared_data_v2
+val_set_size: 0.1
+output_dir: /home/paulpas/git/ideas/llm_training_web_data/finetune/output/terraform-expert-v2
+
+# LoRA configuration
+adapter: lora
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.1
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_target_linear: true
+
+# MODIFIED: More conservative training parameters to avoid GPU hangs
+sequence_len: 1536  # Reduced from 2048
+sample_packing: false  # Disabled - was causing memory pressure
+pad_to_sequence_len: true
+
+gradient_accumulation_steps: 4  # Reduced from 8
+micro_batch_size: 1  # Reduced from 2
+num_epochs: 4
+learning_rate: 0.00005
+lr_scheduler: cosine
+warmup_ratio: 0.1
+
+optimizer: adamw_torch
+weight_decay: 0.05
+max_grad_norm: 0.5
+
+# Precision
+bf16: auto
+fp16: false
+tf32: false
+
+# Logging and evaluation
+logging_steps: 10
+save_steps: 50
+eval_steps: 50
+evaluation_strategy: steps
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
+
+# Checkpointing - Resume from checkpoint-92
+save_total_limit: 5
+save_strategy: steps
+
+# Performance
+gradient_checkpointing: true
+flash_attention: false
+
+# Output
+hub_model_id:
+push_to_hub: false
+
+# Early stopping
+early_stopping_patience: 3
+
+# Seed
+seed: 42

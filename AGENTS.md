@@ -10,7 +10,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Configure pipeline
+# 2. Configure pipeline (optional)
 # Edit config/pipeline_config.yaml:
 #   - Set base_model (e.g., deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B)
 #   - Add git_sources (GitHub repos to train on)
@@ -22,6 +22,13 @@ python -m pipeline.runner --config config/pipeline_config.yaml
 # 4. Use the trained model
 ollama run python-expert  # Or your configured model name
 ```
+
+## Quick Links
+
+- **📊 Running Everything**: `python -m pipeline.runner` (see QUICK_REFERENCE.md)
+- **🚀 Training with Auto-Recovery**: `./finetune/start_auto_recovery.sh` (see TRAINING_AUTO_RECOVERY.md)
+- **📋 Each Stage Independently**: See PIPELINE_STAGES.md
+- **⚡ Common Commands**: See QUICK_REFERENCE.md
 
 ---
 
@@ -49,11 +56,20 @@ STAGE 4: DEDUPLICATE
   ├─ Remove duplicates & low-quality examples
   └─ Output: /data/training/deduped.json
 
-STAGE 5: TRAIN
+STAGE 5: TRAIN (with Auto-Recovery)
   ├─ Fine-tune model with Axolotl
   ├─ Use all available GPUs automatically (DDP)
+  ├─ Auto-detect GPU hangs, crashes, stalls
+  ├─ Auto-recover with progressively conservative settings (5 retries)
   ├─ Save checkpoints every N steps
   └─ Output: /finetune/output/{model_name}/checkpoint-*/
+
+  AUTO-RECOVERY DETAILS:
+  ├─ Detects: GPU hangs (kernel), process crashes, progress stalls
+  ├─ Recovers: Kill zombies → Reset GPU → Use conservative config → Resume
+  ├─ Levels: 4 recovery levels with progressively safer settings
+  ├─ Retries: Up to 5 automatic recovery attempts
+  └─ Logs: /tmp/training_recovery/recovery_*.log
 
 STAGE 6: EXPORT
   ├─ Merge LoRA adapter with base model
